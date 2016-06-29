@@ -1,27 +1,39 @@
 import os
 from commands import getstatusoutput
+from subprocess import check_output
 
 
 def run_cmd(cmd):
-    return getstatusoutput(cmd)
+    return check_output(cmd, shell=True)
 
 def remove(path):
-    cmd = "rm -rf '{0}'".format(path)
-    run_cmd(cmd)
+    os.removedirs(path)
+
+def _handle_files(files, _format=['JPG']):
+    res = []
+    for _f in files:
+        _f = _f.split(' ')[-1].strip('\r')
+	if not _f:
+	    continue
+	_f_end = _f.split('.')[-1].strip()
+	if _f_end.upper() in _format:
+	    print _f
+            res.append(_f)
+    return res
 
 def get_files(path, name=None):
-    cmd = "find '{0}'".format(path)
+    cmd = "dir {0} /s".format(path)
     if name:
         cmd = cmd + " -name '{0}'".format(name)
-    status, files = run_cmd(cmd)
-    return files.split("\n")
+    files = run_cmd(cmd).split('\n')
+    return _handle_files(files)
 
 def move(src, target):
-    cmd = "mv '{0}' '{1}'".format(src, target)
+    cmd = "move '{0}' '{1}'".format(src, target)
     run_cmd(cmd)
 
 def copy(src, target):
-    cmd = "cp -n '{0}' '{1}'".format(src, target)
+    cmd = "copy /Y '{0}' '{1}'".format(src, target)
     return run_cmd(cmd)
 
 def is_diff(src, target):
