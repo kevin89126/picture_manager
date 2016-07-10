@@ -1,3 +1,3 @@
-SRC_PATH = '/Volumes/Picture/diving'
-MOVE_PATH = '/Volumes/Picture/Good'
+SRC_PATH = 'D:\\diving'
+MOVE_PATH = 'D:\\aaa'
 NOTIME_PATH = 'NOTIME'

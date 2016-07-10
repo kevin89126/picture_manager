@@ -1,6 +1,6 @@
 from commands import getstatusoutput
 from utils import remove, get_files, is_diff, path_exists, \
-    create_folder, move, path_join, copy
+    create_folder, move, path_join, copy, path_sep, path_replace
 from constant import NOTIME_PATH, MOVE_PATH, SRC_PATH
 from PIL import Image as img
 
@@ -11,7 +11,7 @@ class PicManager(object):
         self.path = SRC_PATH
         self.mv_path = MOVE_PATH
         self.notime_path = NOTIME_PATH
-        self.files = get_files(self.path, name)
+        self.files = get_files(self.path)
         self.dics = self.to_dic(self.files)
 
     def _get_time(self, _file):
@@ -25,7 +25,7 @@ class PicManager(object):
     def _get_time_folder(self, time):
         if not time:
            return self.notime_path
-        return time.split(' ')[0].strip().replace(':','/')
+        return path_replace(time.split(' ')[0].strip())
 
     def _seperate_one(self, _file):
         time = self._get_time(_file)
@@ -41,7 +41,7 @@ class PicManager(object):
             self._seperate_one(_file)
 
     def _get_name(self, _file):
-        return _file.strip().split("/")[-1]
+        return path_sep(_file)[-1]
 
     def get_names(self, files):
         names = []
@@ -95,9 +95,3 @@ class PicManager(object):
         for dic in dup:
             print '{0}: {1}'.format(dic['name'], dic['paths'])
             self._handle_file(dic['paths'])
-
-
-if __name__ == "__main__":
-    path = '/USB_BACKUP/Picture'
-    pm = PicManager(path)
-    pm.handle_files()

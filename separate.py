@@ -7,6 +7,5 @@ def seperate(endwith):
     print pm.seperate()
 
 if __name__ == "__main__":
-    seperate("*.jpg")
-    seperate("*.JPG")
+    seperate('.JPG')
 
