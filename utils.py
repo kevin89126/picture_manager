@@ -36,7 +36,7 @@ def move(src, target):
     run_cmd(cmd)
 
 def copy(src, target):
-    cmd = "copy {0} {1}".format(src, target)
+    cmd = "copy \"{0}\" \"{1}\"".format(src, target)
     print cmd
     return run_cmd(cmd)
 
