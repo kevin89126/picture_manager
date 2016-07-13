@@ -1,6 +1,7 @@
 from Tkinter import *
 from tkFileDialog import askdirectory
 from seperate import seperate
+import thread
 
 class Action(object):
 
@@ -13,35 +14,54 @@ class Action(object):
         return fd
 
     def start(self):
-        seperate()      
+        self.td_start = thread.start_new_thread(seperate, ())
 
-class BrowEntry(object):
+    def cancel(self):
+        self.td_start.exit()
+       
 
-    def get_entry(self, msg, row, col):
-        self.e = Entry(self.root, width=50)
-        self.e.insert(0, msg)
-        self.e.configure(state='readonly')
-        #self.e.grid(row=row, column=col)
-        self.e.pack(pady=pady, padx = padx)
-        return self.e
+class Utils(object):
+
+    def get_row(self, root):
+        return Frame(root)
+
+    def get_ent(self, row):
+        e = Entry(row)
+        e.configure(state='readonly')
+        return e
+
+    def get_lab(self, row, width, text, anchor='w'):
+        return Label(row, width=width, text=text, anchor=anchor)
+
+    def get_button(self, row, text, command):
+        return Button(row, text=text, command=command)
         
-class BrowButton(Action, BrowEntry):
+class Format(Action, Utils):
 
     def __init__(self, root):
         self.root = root
-        input_e = self.get_entry('Select a input folder ...', 0,0)
-        output_e = self.get_entry('Select a output folder ...', 1,0)
-        self.input_b = Button(root, text='Brows', command=lambda: self.brows(input_e))
-        #self.input_b.grid(row=0, column=0)
-        self.input_b.pack(side=RIGHT, pady=20, padx = 20)
+        self.fields = ['Input Foler', 'Output Folder']
+        self.makeform(root, self.fields)
         
-        self.output_b = Button(root, text='Brows', command=lambda: self.brows(output_e))
-        self.output_b.pack(pady=20, padx = 20)
-        self.start_b = Button(root, text='Start', command=lambda: self.start())
-        self.start_b.pack(pady=20, padx = 20)
+    def folder_format(self, root, field):
+        row = self.get_row(root)
+        lab = self.get_lab(row, width=11, text=field)
+        ent = self.get_ent(row)
+        button = self.get_button(row, text='Brows', command=lambda: self.brows(ent))
+        row.pack(side=TOP, fill=X, padx=5, pady=5)
+        lab.pack(side=LEFT)
+        ent.pack(side=LEFT,fill=X)
+        button.pack(side=LEFT)    
+        
+    def makeform(self, root, fields):
+        entries = {}
+        for field in fields:
+            self.folder_format(root, field)
+        button = self.get_button(root, text='Start', command=lambda: self.start())
+        button.pack(side=LEFT, fill=X)
+        button = self.get_button(root, text='Cancel', command=lambda: self.cancel())
+        button.pack(side=LEFT, fill=X)
 
 root = Tk()
-
-root.geometry('600x400')
-button = BrowButton(root)
+ents = Format(root)
 root.mainloop() 
