@@ -1,18 +1,26 @@
+# -*- coding: Big5 -*- 
 from commands import getstatusoutput
 from utils import remove, get_files, is_diff, path_exists, \
-    create_folder, move, path_join, copy, path_sep, path_replace
-from constant import NOTIME_PATH, MOVE_PATH, SRC_PATH
+    create_folder, move, path_join, copy, path_sep, path_replace, \
+    get_folder
+from constant import NOTIME_PATH
 from PIL import Image as img
 
 class PicManager(object):
 
-    def __init__(self, name=None):
+    def __init__(self):
 	self.img = img
-        self.path = SRC_PATH
-        self.mv_path = MOVE_PATH
+        self.input_path = None
+        self.output_path = None
         self.notime_path = NOTIME_PATH
-        self.files = get_files(self.path)
+
+
+    def get_files(self):
+        self.files = get_files(self.input_path)
         self.dics = self.to_dic(self.files)
+
+    def set_path(self, att_name, _path):
+        setattr(self, att_name, _path)
 
     def _get_time(self, _file):
         time = ''
@@ -22,23 +30,27 @@ class PicManager(object):
 	    print 'No time: ', _file
 	return time
 
-    def _get_time_folder(self, time):
-        if not time:
-           return self.notime_path
-        return path_replace(time.split(' ')[0].strip())
+    def get_file_num(self):
+        return len(self.files)
 
-    def _seperate_one(self, _file):
+    def _get_time_folder(self, _file):
         time = self._get_time(_file)
-        folder = self._get_time_folder(time)
-        fd_path = path_join([self.mv_path, folder, ''])
-        if not path_exists(fd_path):
-            create_folder(fd_path)
-        print _file, fd_path
-        print copy(_file, fd_path)
+        if not time:
+            folder = get_folder(_file)
+            return path_join([self.output_path, self.notime_path, folder, ''])
+        folder = path_replace(time.split(' ')[0].strip(), ":")
+        return path_join([self.output_path, folder, ''])
 
-    def seperate(self):
-	for _file in self.files:
-            self._seperate_one(_file)
+
+    def create_time_folder(self):
+        for _file in self.files:
+            fd = self._get_time_folder(_file)
+            if not path_exists(fd):
+                create_folder(fd)
+            
+    def _seperate_one(self, _file):
+        fd = self._get_time_folder(_file)
+        return copy(_file, fd)
 
     def _get_name(self, _file):
         return path_sep(_file)[-1]

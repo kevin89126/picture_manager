@@ -1,10 +1,11 @@
 import os
 from commands import getstatusoutput
-from subprocess import check_output
+import subprocess
+
 
 
 def run_cmd(cmd):
-    return check_output(cmd, shell=True)
+    subprocess.call(cmd, shell=True)
 
 def remove(path):
     os.removedirs(path)
@@ -27,7 +28,6 @@ def get_files(path, _format=['JPG']):
 	    _f_end = _f.split('.')[-1].strip()
 	    if _f_end.upper() in _format:
 	        res.append(path_join([root, _f]))
-    print res
     return res
 
 
@@ -36,9 +36,11 @@ def move(src, target):
     run_cmd(cmd)
 
 def copy(src, target):
-    cmd = "copy \"{0}\" \"{1}\"".format(src, target)
-    print cmd
-    return run_cmd(cmd)
+    src = src.encode('utf-8')
+    target = target.encode('utf-8')
+    cmd = "copy /Y \"{0}\" \"{1}\"".format(src, target)
+    run_cmd(cmd)
+    return cmd
 
 def is_diff(src, target):
     cmd = "diff '{0}' '{1}'".format(src, target)
@@ -57,9 +59,14 @@ def path_join(paths):
 def path_sep(path):
     return path.split("\\")
 
-def path_replace(path):
-    return path.replace(":", "\\")
+def get_folder(_f):
+    _p = path_sep(_f)[0:-1]
+    return path_join(_p)
+
+def path_replace(path, cha):
+    return path.replace(cha, "\\")
 
 def create_folder(path):
-    print 'Create path: {0}'.format(path)
     os.makedirs(path)
+    return 'Create folder: {0}'.format(path)
+    
