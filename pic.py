@@ -42,11 +42,7 @@ class PicManager(object):
         return path_join([self.output_path, folder, ''])
 
 
-    def create_time_folder(self):
-        for _file in self.files:
-            fd = self._get_time_folder(_file)
-            if not path_exists(fd):
-                create_folder(fd)
+
             
     def _seperate_one(self, _file):
         fd = self._get_time_folder(_file)
