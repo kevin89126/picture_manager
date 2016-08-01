@@ -1,6 +1,8 @@
 import os
+import time
 from commands import getstatusoutput
 import subprocess
+import shutil
 
 
 
@@ -9,6 +11,9 @@ def run_cmd(cmd):
 
 def remove(path):
     os.removedirs(path)
+
+def get_time():
+    return time.time()
 
 def _handle_files(files, _format=['JPG']):
     res = []
@@ -30,17 +35,23 @@ def get_files(path, _format=['JPG']):
 	        res.append(path_join([root, _f]))
     return res
 
+def get_file_size(path):
+    size = os.path.getsize(path)
+    return size
+
+def format_time(sec):
+    return time.strftime('%H:%M:%S', time.gmtime(sec))
 
 def move(src, target):
     cmd = "move '{0}' '{1}'".format(src, target)
     run_cmd(cmd)
 
 def copy(src, target):
-    src = src.encode('utf-8')
-    target = target.encode('utf-8')
-    cmd = "copy /Y \"{0}\" \"{1}\"".format(src, target)
-    run_cmd(cmd)
-    return cmd
+    #cmd = "copy /Y \"{0}\" \"{1}\"".format(src, target)
+    #run_cmd(cmd)
+    print 'Copy {0} to {1}'.format(src.encode('utf-8'), target.encode('utf-8'))
+    shutil.copy(src, target)
+    return 'Copy {0} to {1}'.format(src.encode('utf-8'), target.encode('utf-8'))
 
 def is_diff(src, target):
     cmd = "diff '{0}' '{1}'".format(src, target)
@@ -60,13 +71,12 @@ def path_sep(path):
     return path.split("\\")
 
 def get_folder(_f):
-    _p = path_sep(_f)[0:-1]
-    return path_join(_p)
-
+    return path_sep(_f)[-2]
+    
 def path_replace(path, cha):
     return path.replace(cha, "\\")
 
 def create_folder(path):
     os.makedirs(path)
-    return 'Create folder: {0}'.format(path)
+    return 'Create folder: {0}'.format(path.encode('utf-8'))
     

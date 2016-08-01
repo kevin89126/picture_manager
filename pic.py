@@ -9,11 +9,10 @@ from PIL import Image as img
 class PicManager(object):
 
     def __init__(self):
-	self.img = img
         self.input_path = None
         self.output_path = None
+	self.img = img
         self.notime_path = NOTIME_PATH
-
 
     def get_files(self):
         self.files = get_files(self.input_path)
@@ -36,12 +35,10 @@ class PicManager(object):
     def _get_time_folder(self, _file):
         time = self._get_time(_file)
         if not time:
-            folder = get_folder(_file)
-            return path_join([self.output_path, self.notime_path, folder, ''])
-        folder = path_replace(time.split(' ')[0].strip(), ":")
-        return path_join([self.output_path, folder, ''])
-
-
+            return path_join([self.output_path, self.notime_path, ''])
+        folder = get_folder(_file)
+        time_folder = path_replace(time.split(' ')[0].strip(), ":")
+        return path_join([self.output_path, time_folder, folder, ''])
 
             
     def _seperate_one(self, _file):
