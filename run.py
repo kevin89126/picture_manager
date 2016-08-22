@@ -87,7 +87,7 @@ class StartThread(threading.Thread, UtilsManager):
     def run(self):
         self.percent_id = self.remain_can.create_text(WIDTH-20, 10, text="0%", state=NORMAL)
         self.listbox_insert('Init copy files')        
-        self.pic_mgr.get_files()
+
         self.listbox_insert('Counting file\'s size')
         for _file in self.pic_mgr.files:
             self.input_size = self.input_size + get_file_size(_file)
@@ -136,27 +136,33 @@ class StartThread(threading.Thread, UtilsManager):
         self.remain_time = remain_time
 
 class Action(object):
-    
+
     def dup_info(self):
         pic_mgr = PicManager()
         pic_mgr.input_path = self.input_path
         title = "Duplicate File"
         pic_mgr.get_files()
+        if len(pic_mgr.files) == 0:
+            self.show_msg('Empty Folder', 'No pictures!!')
+            return
         t = Toplevel()
         t.wm_title(title)
         dup_farme = self.get_scrollbar(t)
         max_len = 0
+        i = 1
         for key, value in pic_mgr.dics.items():
             res = []
-            if len(value) > 1:
-                for v in value:
-                    res.append(v.encode('utf-8'))
-                res = ', '.join(res)
-                if max_len < len(res):
-                    max_len = len(res) + 10
-                msg = '{0}: {1}'.format(key, res)
-                dup_farme.insert(END, msg)
-                dup_farme.see(END)
+            if len(value) <= 1:
+                continue
+            for v in value:
+                res.append(v.encode('utf-8'))
+            res = ', '.join(res)
+            if max_len < len(res):
+                max_len = len(res) + 10
+            msg = '{2} {0}: {1}'.format(key, res, i)
+            dup_farme.insert(END, msg)
+            dup_farme.see(END)
+            i = i + 1
         dup_farme.config(width=max_len)
         msg = 'Find duplicate file done.'
         self.show_msg(title, msg)
@@ -187,6 +193,10 @@ class Action(object):
             return
         self.start_t = StartThread(self.listbox, self.time_bar, self.remain_can)
         self.start_t.set_path(self.input_path, self.output_path)
+        self.start_t.pic_mgr.get_files()
+        if len(self.start_t.pic_mgr.files) == 0:
+            self.show_msg('Empty Folder', 'No pictures!!')
+            return
         self.start_t.set_state('running')
         self.start_t.reset_time_bar()
         remain_time = format_time(0)
@@ -211,10 +221,10 @@ class Action(object):
         remain_time = format_time(cur_time)
         text = REMAIN_FORMAT.format(remain_time) 
         self.remain_can.itemconfig(self.remain_time_id, text=text)
-        sec =  cur_time - PERID_TIME * 1.0 / 1000
-        if sec < 0:
-            return
-        self.start_t.set_remain_time(sec)
+        #sec =  cur_time - PERID_TIME * 1.0 / 1000
+        #if sec < 0:
+        #    return
+        #self.start_t.set_remain_time(sec)
         
 
     def check_start_t(self):
@@ -281,11 +291,11 @@ class Action(object):
         l.pack(side=LEFT)
         r3 = self.get_row(t)
         r3.pack(side=TOP, fill=BOTH)
-        l = Label(r3, text='Version: 1.3')
+        l = Label(r3, text='Version: 1.4')
         l.pack(side=LEFT)
         r4 = self.get_row(t)
         r4.pack(side=TOP, fill=BOTH)
-        l = Label(r4, text='Release Date: 2016/8/22')
+        l = Label(r4, text='Release Date: 2016/8/23')
         l.pack(side=LEFT)
         r5 = self.get_row(t)
         r5.pack(side=TOP, fill=BOTH)
