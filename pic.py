@@ -21,6 +21,10 @@ class PicManager(object):
     def set_path(self, att_name, _path):
         setattr(self, att_name, _path)
 
+    def set_time(self, _file):
+        #self.img.open(_file)
+        pass
+
     def _get_time(self, _file):
         time = ''
 	try:
@@ -33,10 +37,10 @@ class PicManager(object):
         return len(self.files)
 
     def _get_time_folder(self, _file):
+        folder = get_folder(_file)
         time = self._get_time(_file)
         if not time:
-            return path_join([self.output_path, self.notime_path, ''])
-        folder = get_folder(_file)
+            return path_join([self.output_path, self.notime_path, folder, ''])
         time_folder = path_replace(time.split(' ')[0].strip(), ":")
         return path_join([self.output_path, time_folder, folder, ''])
 

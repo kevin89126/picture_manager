@@ -143,29 +143,39 @@ class Action(object):
         title = "Duplicate File"
         pic_mgr.get_files()
         if len(pic_mgr.files) == 0:
-            self.show_msg('Empty Folder', 'No pictures!!')
+            self.show_msg('Duplication', 'No pictures!!')
+            return
+
+        max_len = 0
+        dup = {}
+        for key, value in pic_mgr.dics.items():
+            if len(value) <= 1:
+                continue
+            dup[key] = value
+        if not dup:
+            self.show_msg('Duplication', 'No duplicate pictures!!')
             return
         t = Toplevel()
         t.wm_title(title)
         dup_farme = self.get_scrollbar(t)
-        max_len = 0
+        #t.lower()
         i = 1
-        for key, value in pic_mgr.dics.items():
+        for key, value in dup.items():
             res = []
-            if len(value) <= 1:
-                continue
             for v in value:
                 res.append(v.encode('utf-8'))
             res = ', '.join(res)
             if max_len < len(res):
                 max_len = len(res) + 10
-            msg = '{2} {0}: {1}'.format(key, res, i)
+            msg = '{2} {0}: {1}'.format(key.encode('utf-8'), res, i)
             dup_farme.insert(END, msg)
             dup_farme.see(END)
             i = i + 1
         dup_farme.config(width=max_len)
         msg = 'Find duplicate file done.'
         self.show_msg(title, msg)
+        t.lift()
+
         
     def brows(self, entry, field):
         fd = askdirectory(parent=self.root)
@@ -384,6 +394,7 @@ class Format(Action, UtilsManager):
 
 root = Tk()
 root.title('PicTool')
+root.iconbitmap('.\img\\top_icon.ico')
 root.geometry('{}x{}'.format(WIDTH, HEIGHT))
 root.resizable(width=False, height=False)
 ents = Format(root)

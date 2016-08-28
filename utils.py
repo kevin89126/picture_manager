@@ -38,7 +38,7 @@ class UtilsManager(object):
         return Button(row, image=img, command=command)
     
     def get_scrollbar(self, root):
-        row = self.get_row(root, bg='red')
+        row = self.get_row(root)
         row.pack(side=TOP,fill=BOTH, expand=TRUE)
         vscrollbar = Scrollbar(row, orient=VERTICAL)
         hscrollbar = Scrollbar(row, orient=HORIZONTAL)
@@ -94,7 +94,8 @@ def move(src, target):
     run_cmd(cmd)
 
 def copy(src, target):
-    shutil.copy(src, target)
+    shutil.copy2(src, target)
+    #shutil.copystat(src, target)
     return 'Copy {0} to {1}'.format(src.encode('utf-8'), target.encode('utf-8'))
 
 def is_diff(src, target):
