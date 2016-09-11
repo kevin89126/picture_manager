@@ -4,6 +4,7 @@ from commands import getstatusoutput
 import subprocess
 import shutil
 import logging
+import filecmp
 from Tkinter import *
 
 logger = logging.getLogger('PicTool')
@@ -99,12 +100,7 @@ def copy(src, target):
     return 'Copy {0} to {1}'.format(src.encode('utf-8'), target.encode('utf-8'))
 
 def is_diff(src, target):
-    cmd = "diff '{0}' '{1}'".format(src, target)
-    status, res = run_cmd(cmd)
-    if status == 0:
-        return False
-    else:
-        return True
+    return filecmp.cmp(src, target)
 
 def path_exists(path):
     return os.path.exists(path)
