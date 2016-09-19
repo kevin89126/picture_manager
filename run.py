@@ -6,7 +6,8 @@ import tkMessageBox
 from pic import PicManager
 from utils import path_replace, path_exists, copy, \
      create_folder, get_file_size, format_time, get_time, \
-     logger, path_join, UtilsManager
+     path_join, get_row, get_ent, get_text, get_lab, \
+     get_button, get_img_button, get_scrollbar, check_box
 import threading
 import os
 import webbrowser
@@ -14,13 +15,14 @@ import webbrowser
 
 INPUT_FIELD = 'Input Folder'
 OUTPUT_FIELD = 'Output Folder'
-WIDTH = 315
-HEIGHT = 335
+WIDTH = 700
+HEIGHT = 500
 PERID_TIME = 500
 REMAIN_FORMAT = 'Remain Time: {0}'
 PWD = os.getcwd()
+RULE = 'Rule'
 
-class StartThread(threading.Thread, UtilsManager):
+class StartThread(threading.Thread):
     
     def __init__(self, listbox, time_bar, remain_can):
         threading.Thread.__init__(self)
@@ -93,7 +95,6 @@ class StartThread(threading.Thread, UtilsManager):
             self.input_size = self.input_size + get_file_size(_file)
         str_time = get_time()
         for _file in self.pic_mgr.files:
-            logger.info('Copy file: {0}'.format(_file.encode('utf-8')))
             fd = self.create_time_folder(_file)
             f_size = get_file_size(_file)
             self.output_size = f_size + self.output_size
@@ -315,10 +316,16 @@ class Action(object):
         l = Label(r5, text=fb, fg="blue", cursor="hand2")
         l.pack(side=LEFT)
         l.bind("<Button-1>", callback)
-
-
         
-class Format(Action, UtilsManager):
+    def wm_delete_window(self):
+        if self.start_t and self.start_t.state == 'running':
+            tkMessageBox.showerror(
+            "Close windows",
+            "Please cancel copy process first")
+        else:
+            self.root.destroy()
+        
+class Format(Action):
 
     def __init__(self, root):
         self.root = root
@@ -332,14 +339,6 @@ class Format(Action, UtilsManager):
         self.percent_id= None
         self.periodical_check()
         root.protocol('WM_DELETE_WINDOW', self.wm_delete_window)
-
-    def wm_delete_window(self):
-        if self.start_t and self.start_t.state == 'running':
-            tkMessageBox.showerror(
-            "Close windows",
-            "Please cancel copy process first")
-        else:
-            self.root.destroy()
 
         
     def folder_format(self, root, field):
@@ -389,13 +388,71 @@ class Format(Action, UtilsManager):
         self.dup_bt = self.get_button(
             b_frame, text='Find Duplicate', command=lambda: self.dup_info())
         self.dup_bt.config(state=DISABLED)
-        self.dup_bt.pack(fill=BOTH, side=LEFT) 
-        
+        self.dup_bt.pack(fill=BOTH, side=LEFT)
 
+class BaseWindows(Action):
+    
+    def __init__(self, root):
+        self.root = root
+        #self.fields = ['Input Folder', 'Output Folder']
+        self.wideth = 250
+        self.img = PhotoImage(file=".\img\info.gif")
+        self.create_base_windows()
+        self.input_path = None
+        self.output_path = None
+        self.start_t = None
+        self.percent_id= None
+        #self.periodical_check()
+        root.protocol('WM_DELETE_WINDOW', self.wm_delete_window)
+
+    def folder_format(self, row, field):
+        f_f = get_row(row, 'blue')
+        f_f.pack(side=LEFT, expand=TRUE, fill=BOTH)
+        lab = get_lab(f_f, width=11, text=field)
+        lab.pack(side=TOP, anchor='nw')
+        ent = get_ent(f_f)
+        button = get_button(
+            f_f, text='Brows', command=lambda: self.brows(ent, field))
+        lab.pack(side=LEFT,  anchor='nw')
+        ent.pack(side=LEFT,fill=X, expand=TRUE, anchor='nw')
+        button.pack(side=LEFT,anchor='nw')
+        
+    def info_frame(self):
+        info_frame = get_row(self.root)
+        info_frame.pack(side=TOP, expand=TRUE, fill=X)
+        self.info_bt = get_img_button(
+            info_frame, self.img, command=lambda: self.info())
+        self.info_bt.pack(side=LEFT, fill=BOTH)
+
+    def content_frame(self):
+        content = get_row(self.root, bg='red')
+        content.pack(side=TOP, expand=TRUE, fill=BOTH)
+        return content
+
+    def rule_frame(self, row):
+        rule_f = get_row(row, bg='black')
+        rule_f.pack(side=LEFT, anchor='w', fill=BOTH)
+        lab = get_lab(rule_f, 0, RULE)
+        lab.pack(side=TOP, anchor='nw')
+        chk = check_box(rule_f, 'RAW')
+        chk.pack(side=TOP, anchor='nw')
+        chk = check_box(rule_f, 'JPEG')
+        chk.pack(side=TOP, anchor='nw')
+
+    def create_base_windows(self):
+        # Top info frame
+        self.info_frame()
+
+        content_f = self.content_frame()
+        self.rule_frame(content_f)
+        self.folder_format(content_f, 'Input')
+        self.folder_format(content_f, 'Output')
+        
 root = Tk()
 root.title('PicTool')
 root.iconbitmap('.\img\\top_icon.ico')
 root.geometry('{}x{}'.format(WIDTH, HEIGHT))
 root.resizable(width=False, height=False)
-ents = Format(root)
+#ents = Format(root)
+ents = BaseWindows(root)
 root.mainloop() 

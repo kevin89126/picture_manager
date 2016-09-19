@@ -1,57 +1,51 @@
 import os
 import time
-from commands import getstatusoutput
 import subprocess
 import shutil
-import logging
 import filecmp
 from Tkinter import *
 
-logger = logging.getLogger('PicTool')
-fh = logging.FileHandler('pictool.log')
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-fh.setFormatter(formatter)
-logger.addHandler(fh)
-logger.setLevel(logging.DEBUG)
-
-class UtilsManager(object):
     
-    def get_row(self, root, bg=None):
-        return Frame(root,bg=bg)
+def get_row(root, bg=None):
+    return Frame(root,bg=bg)
 
-    def get_ent(self, row, state='readonly'):
-        e = Entry(row)
-        e.configure(state=state)
-        return e
+def get_ent(row, state='readonly'):
+    e = Entry(row)
+    e.configure(state=state)
+    return e
 
-    def get_text(self, row, state='readonly'):
-        e = Text(row)
-        e.configure(state=state)
-        return e
+def get_text(row, state='readonly'):
+    e = Text(row)
+    e.configure(state=state)
+    return e
 
-    def get_lab(self, row, width, text, anchor='w'):
-        return Label(row, width=width, text=text, anchor=anchor)
+def get_lab(row, width, text):
+    return Label(row, width=width, text=text)
 
-    def get_button(self, row, text, command):
-        return Button(row, text=text, command=command)
+def get_button(row, text, command):
+    return Button(row, text=text, command=command)
 
-    def get_img_button(self, row, img, command):
-        return Button(row, image=img, command=command)
+def get_img_button(row, img, command):
+    return Button(row, image=img, command=command)
     
-    def get_scrollbar(self, root):
-        row = self.get_row(root)
-        row.pack(side=TOP,fill=BOTH, expand=TRUE)
-        vscrollbar = Scrollbar(row, orient=VERTICAL)
-        hscrollbar = Scrollbar(row, orient=HORIZONTAL)
-        vscrollbar.pack(fill=Y, side=RIGHT)
-        hscrollbar.pack(fill=X, side=BOTTOM)
-        listbox = Listbox(row)
-        listbox.pack(side=LEFT, fill=BOTH, expand=TRUE)
-        listbox.config(yscrollcommand=vscrollbar.set,
-                       xscrollcommand=hscrollbar.set)
-        vscrollbar.config(command=listbox.yview)
-        hscrollbar.config(command=listbox.xview)
-        return listbox
+def get_scrollbar(root):
+    row = get_row(root)
+    row.pack(side=TOP,fill=BOTH, expand=TRUE)
+    vscrollbar = Scrollbar(row, orient=VERTICAL)
+    hscrollbar = Scrollbar(row, orient=HORIZONTAL)
+    vscrollbar.pack(fill=Y, side=RIGHT)
+    hscrollbar.pack(fill=X, side=BOTTOM)
+    listbox = Listbox(row)
+    listbox.pack(side=LEFT, fill=BOTH, expand=TRUE)
+    listbox.config(yscrollcommand=vscrollbar.set,
+                   xscrollcommand=hscrollbar.set)
+    vscrollbar.config(command=listbox.yview)
+    hscrollbar.config(command=listbox.xview)
+    return listbox
+
+def check_box(row, text):
+    var = IntVar()
+    return Checkbutton(row, text=text, variable=var)
 
 
 def run_cmd(cmd):
@@ -96,7 +90,6 @@ def move(src, target):
 
 def copy(src, target):
     shutil.copy2(src, target)
-    #shutil.copystat(src, target)
     return 'Copy {0} to {1}'.format(src.encode('utf-8'), target.encode('utf-8'))
 
 def is_diff(src, target):
@@ -106,13 +99,13 @@ def path_exists(path):
     return os.path.exists(path)
 
 def path_join(paths):
-    return '\\'.join(paths)
+    return os.path.join(*paths)
 
-def path_sep(path):
-    return path.split("\\")
+def get_folder(path):
+    return os.path.dirname(path)
 
-def get_folder(_f):
-    return path_sep(_f)[-2]
+def get_name(path):
+    return os.path.basename(path)
     
 def path_replace(path, cha):
     return path.replace(cha, "\\")
