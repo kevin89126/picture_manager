@@ -324,7 +324,7 @@ class Format(Action, UtilsManager):
         self.root = root
         self.fields = ['Input Folder', 'Output Folder']
         self.wideth = 250
-        self.img = PhotoImage(file=".\img\info.gif")
+        self.img = PhotoImage(file=path_join([".", "img", "info.gif"]))
         self.makeform(root, self.fields)
         self.input_path = None
         self.output_path = None
