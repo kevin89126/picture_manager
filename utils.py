@@ -95,8 +95,11 @@ def move(src, target):
     run_cmd(cmd)
 
 def copy(src, target):
-    shutil.copy2(src, target)
+    try:
+        shutil.copy2(src, target)
     #shutil.copystat(src, target)
+    except:
+        pass
     return 'Copy {0} to {1}'.format(src.encode('utf-8'), target.encode('utf-8'))
 
 def is_diff(src, target):
@@ -104,18 +107,16 @@ def is_diff(src, target):
 
 def path_exists(path):
     return os.path.exists(path)
+    
+def get_name(path):
+    return os.path.basename(path)
 
 def path_join(paths):
-    return '\\'.join(paths)
+    return os.path.join(*paths)
 
-def path_sep(path):
-    return path.split("\\")
-
-def get_folder(_f):
-    return path_sep(_f)[-2]
-    
-def path_replace(path, cha):
-    return path.replace(cha, "\\")
+def get_folder(path):
+    res = os.path.dirname(path)
+    return get_name(res)
 
 def create_folder(path):
     os.makedirs(path)

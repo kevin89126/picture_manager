@@ -4,7 +4,7 @@ import math
 from tkFileDialog import askdirectory
 import tkMessageBox
 from pic import PicManager
-from utils import path_replace, path_exists, copy, \
+from utils import path_exists, copy, \
      create_folder, get_file_size, format_time, get_time, \
      logger, path_join, UtilsManager
 import threading
@@ -179,7 +179,7 @@ class Action(object):
         
     def brows(self, entry, field):
         fd = askdirectory(parent=self.root)
-        fd = path_replace(fd, "/")
+        #fd = path_replace(fd, "/")
         entry.configure(state='normal')
         entry.delete(0, END)
         entry.insert(0, fd)

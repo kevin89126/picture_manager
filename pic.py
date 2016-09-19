@@ -1,8 +1,7 @@
 # -*- coding: Big5 -*- 
 from commands import getstatusoutput
 from utils import remove, get_files, is_diff, path_exists, \
-    create_folder, move, path_join, copy, path_sep, path_replace, \
-    get_folder
+    create_folder, move, path_join, copy, get_name, get_folder
 from constant import NOTIME_PATH
 from PIL import Image as img
 
@@ -41,21 +40,17 @@ class PicManager(object):
         time = self._get_time(_file)
         if not time:
             return path_join([self.output_path, self.notime_path, folder, ''])
-        time_folder = path_replace(time.split(' ')[0].strip(), ":")
-        return path_join([self.output_path, time_folder, folder, ''])
-
+        time_folder = time.split(' ')[0].strip().split(":")
+        return path_join([self.output_path] + time_folder + [folder, ''])
             
     def _seperate_one(self, _file):
         fd = self._get_time_folder(_file)
         return copy(_file, fd)
 
-    def _get_name(self, _file):
-        return path_sep(_file)[-1]
-
     def get_names(self, files):
         names = []
         for _file in files:
-            name = self._get_name(_file)
+            name = get_name(_file)
             names.append(name)
         return names
 
@@ -68,7 +63,7 @@ class PicManager(object):
         names = self.get_names(files)
         dic = init_dic(names)
         for _file in files:
-            dic[self._get_name(_file)].append(_file)
+            dic[get_name(_file)].append(_file)
         return dic
 
     def _find_dup(self):
