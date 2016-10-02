@@ -20,7 +20,11 @@ HEIGHT = 500
 PERID_TIME = 500
 REMAIN_FORMAT = 'Remain Time: {0}'
 PWD = os.getcwd()
-RULE = 'Rule'
+RULE = u'規則:'
+TYPE = u'檔案類型:'
+INPUT = u'輸入資料夾'
+OUTPUT = u'備份資料夾'
+MTYPE = u'相機型號:'
 
 class StartThread(threading.Thread):
     
@@ -432,12 +436,13 @@ class BaseWindows(Action):
     def rule_frame(self, row):
         rule_f = get_row(row, bg='black')
         rule_f.pack(side=LEFT, anchor='w', fill=BOTH)
-        lab = get_lab(rule_f, 0, RULE)
-        lab.pack(side=TOP, anchor='nw')
-        chk = check_box(rule_f, 'RAW')
-        chk.pack(side=TOP, anchor='nw')
-        chk = check_box(rule_f, 'JPEG')
-        chk.pack(side=TOP, anchor='nw')
+
+        lab = get_lab(rule_f, 0, RULE).grid(row=0, sticky=W)
+        lab = get_lab(rule_f, 0, TYPE).grid(row=1, sticky=W)
+        chk_raw = check_box(rule_f, 'RAW').grid(row=2, sticky=W)
+        chk_jpeg = check_box(rule_f, 'JPEG').grid(row=3, sticky=W)
+        lab = get_lab(rule_f, 0, MTYPE).grid(row=4, sticky=W)
+
 
     def create_base_windows(self):
         # Top info frame
@@ -445,8 +450,8 @@ class BaseWindows(Action):
 
         content_f = self.content_frame()
         self.rule_frame(content_f)
-        self.folder_format(content_f, 'Input')
-        self.folder_format(content_f, 'Output')
+        self.folder_format(content_f, INPUT)
+        self.folder_format(content_f, OUTPUT)
         
 root = Tk()
 root.title('PicTool')
