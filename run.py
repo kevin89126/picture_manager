@@ -12,12 +12,32 @@ import os
 import webbrowser
 
 
-INPUT_FIELD = 'Input Folder'
-OUTPUT_FIELD = 'Output Folder'
+INPUT_FOLDER = u'照片資料夾'
+OUTPUT_FOLDER = u'備份資料夾'
+BROWS = u'瀏覽'
 WIDTH = 315
 HEIGHT = 335
 PERID_TIME = 500
-REMAIN_FORMAT = 'Remain Time: {0}'
+REMAIN_FORMAT = u'剩餘時間: {0}'
+COPY_CANCEL = u'取消備份'
+CANCEL = u'取消'
+DONE = u'完成'
+INIT_COPY_FILE = u'備份檔案準備中'
+COUNT_FILE_SIZE = u'計算備份檔案大小'
+NO_PICTURE = u'此資料下夾無符合照片'
+WARNING = u'警告'
+NO_DUPLICATE = u'此資料下夾無重複照片'
+INFO = u'通知'
+DEL_WINDOW_MSG = u'請先取消備份，再關閉程式'
+START = u'開始'
+DUPLICATE = u'尋找重複照片'
+ARTHOR = u'作者'
+EMAIL = u'信箱'
+FACEBOOK = u'粉絲團'
+VERSION = u'版本'
+RELEASE_DATE = u'版本日期'
+COPY_FILE = u'備份照片'
+
 PWD = os.getcwd()
 
 class StartThread(threading.Thread, UtilsManager):
@@ -32,10 +52,10 @@ class StartThread(threading.Thread, UtilsManager):
         self.input_size = 0
         self.output_size = 0
         self.percent = 0
-        self.remain_time = None
         self.next_bar = 1
         self.width = WIDTH
         self.replace = False
+        self.str_time = get_time()
 
     def reset_time_bar(self):
         self.time_bar.delete('all')
@@ -49,16 +69,13 @@ class StartThread(threading.Thread, UtilsManager):
         self.listbox.insert(END, msg)
         self.listbox.see(END)
 
-    def get_remain_time(self, str_time):
-        diff_time = get_time() - str_time
+    def get_remain_time(self):
+        diff_time = get_time() - self.str_time
         rem_size = self.input_size - self.output_size
-        if self.output_size == 0:
+        if self.output_size == 0 or diff_time < 0:
             return 0
         res = (diff_time * 1.0/self.output_size) * rem_size
         return int(math.ceil(res))
-        
-    def remain_time(self):
-        return self.remain_time
 
     def precent(self):
         return self.percent
@@ -76,7 +93,8 @@ class StartThread(threading.Thread, UtilsManager):
         raw = self.output_size * 1.0 /self.input_size
         bar_line = int(raw * self.width)
         self.percent = str(int(raw * 100)) + "%"
-        if not isinstance(self.next_bar, int) or not isinstance(bar_line, int):
+        if not isinstance(self.next_bar, int) or not isinstance(bar_line, int) \
+           or self.next_bar == bar_line:
             return
         self.time_bar.create_rectangle(self.next_bar, 0, bar_line, 20,
                                        fill="blue", outline = 'blue')
@@ -86,31 +104,25 @@ class StartThread(threading.Thread, UtilsManager):
     
     def run(self):
         self.percent_id = self.remain_can.create_text(WIDTH-20, 10, text="0%", state=NORMAL)
-        self.listbox_insert('Init copy files')        
+        self.listbox_insert(INIT_COPY_FILE)        
 
-        self.listbox_insert('Counting file\'s size')
+        self.listbox_insert(COUNT_FILE_SIZE)
         for _file in self.pic_mgr.files:
             self.input_size = self.input_size + get_file_size(_file)
-        str_time = get_time()
         for _file in self.pic_mgr.files:
-            logger.info('Copy file: {0}'.format(_file.encode('utf-8')))
+            #logger.info(u'{0}: {1}'.format(COPY_FILE,_file.encode('utf-8')))
             fd = self.create_time_folder(_file)
             f_size = get_file_size(_file)
             self.output_size = f_size + self.output_size
             self.copy_file(_file, fd)
-            cur_remain_time = self.get_remain_time(str_time)
-            if cur_remain_time + 1 < self.remain_time or \
-               not self.remain_time:
-                self.remain_time = cur_remain_time
             try:
                 self.show_time_line()
             except Exception as err:
                 pass
             if self.state == 'cancel':
-                self.listbox_insert('Copy Cancel')
+                self.listbox_insert(COPY_CANCEL)
                 self.set_state('cancel')
                 return
-        self.remain_time = 0
         self.set_state('done')
 
             
@@ -132,20 +144,16 @@ class StartThread(threading.Thread, UtilsManager):
     def set_state(self, state):
         self.state = state
 
-    def set_remain_time(self, remain_time):
-        self.remain_time = remain_time
-
 class Action(object):
 
     def dup_info(self):
         pic_mgr = PicManager()
         pic_mgr.input_path = self.input_path
-        title = "Duplicate File"
+        title = INFO
         pic_mgr.get_files()
         if len(pic_mgr.files) == 0:
-            self.show_msg('Duplication', 'No pictures!!')
+            self.show_msg(WARNING, NO_PICTURE)
             return
-
         max_len = 0
         dup = {}
         for key, value in pic_mgr.dics.items():
@@ -153,7 +161,7 @@ class Action(object):
                 continue
             dup[key] = value
         if not dup:
-            self.show_msg('Duplication', 'No duplicate pictures!!')
+            self.show_msg(WARNING, NO_DUPLICATE)
             return
         t = Toplevel()
         t.wm_title(title)
@@ -172,7 +180,7 @@ class Action(object):
             dup_farme.see(END)
             i = i + 1
         dup_farme.config(width=max_len)
-        msg = 'Find duplicate file done.'
+        msg = DONE
         self.show_msg(title, msg)
         t.lift()
 
@@ -184,9 +192,9 @@ class Action(object):
         entry.delete(0, END)
         entry.insert(0, fd)
         entry.configure(state='readonly')
-        if field == INPUT_FIELD:
+        if field == INPUT_FOLDER:
             self.input_path = fd
-        elif field == OUTPUT_FIELD:
+        elif field == OUTPUT_FOLDER:
             self.output_path = fd
         if self.input_path and self.output_path:
             self.start_bt.config(state=NORMAL)
@@ -205,14 +213,14 @@ class Action(object):
         self.start_t.set_path(self.input_path, self.output_path)
         self.start_t.pic_mgr.get_files()
         if len(self.start_t.pic_mgr.files) == 0:
-            self.show_msg('Empty Folder', 'No pictures!!')
+            self.show_msg(WARNING, NO_PICTURE)
             return
         self.start_t.set_state('running')
         self.start_t.reset_time_bar()
-        remain_time = format_time(0)
-        text = REMAIN_FORMAT.format(remain_time)
-        self.remain_time_id = self.remain_can.create_text(
-            80, 10, text=text, state=NORMAL)
+        #remain_time = format_time(0)
+        #text = REMAIN_FORMAT.format(remain_time)
+        #self.remain_time_id = self.remain_can.create_text(
+        #    80, 10, text=text, state=NORMAL)
         self.start_t.start()
         self.cancel_bt.config(state=NORMAL)
 
@@ -225,16 +233,20 @@ class Action(object):
         tkMessageBox.showinfo(title, msg)
 
     def check_remain_time(self):
-        if not self.start_t.remain_time:
+        
+  
+        if not self.start_t:
             return
+        if not self.start_t.state == 'running':
+            return
+        
+        cur_remain_time = self.start_t.get_remain_time()
+        if not cur_remain_time == 0:
+            self.remain_time = cur_remain_time
         cur_time = self.start_t.remain_time
         remain_time = format_time(cur_time)
         text = REMAIN_FORMAT.format(remain_time) 
         self.remain_can.itemconfig(self.remain_time_id, text=text)
-        #sec =  cur_time - PERID_TIME * 1.0 / 1000
-        #if sec < 0:
-        #    return
-        #self.start_t.set_remain_time(sec)
         
 
     def check_start_t(self):
@@ -244,18 +256,21 @@ class Action(object):
             return
         if self.start_t.state == 'running':
             self.start_bt.config(state=DISABLED)
-            self.check_remain_time()
+            self.dup_bt.config(state=DISABLED)
+            #self.check_remain_time()
 
         if self.start_t.state == 'done':
             self.start_t = None
             self.cancel_bt.config(state=DISABLED)
             self.start_bt.config(state=NORMAL)
-            self.show_msg('Success', 'Copy Success')
+            self.dup_bt.config(state=NORMAL)
+            self.show_msg(INFO, DONE)
         elif self.start_t.state == 'cancel':
             self.start_t = None
             self.cancel_bt.config(state=DISABLED)
             self.start_bt.config(state=NORMAL)
-            self.show_msg('Cancel', 'Copy Cancel')
+            self.dup_bt.config(state=NORMAL)
+            self.show_msg(INFO, CANCEL)
 
     def check_start_bt(self):
         if not self.input_path or not self.output_path:
@@ -293,24 +308,24 @@ class Action(object):
         t.wm_title("Information")
         r1 = self.get_row(t)
         r1.pack(side=TOP, fill=BOTH)
-        l = Label(r1, text='Author: Kevin Chen')
+        l = Label(r1, text=u'{0}: Kevin Chen'.format(ARTHOR))
         l.pack(side=LEFT)
         r2 = self.get_row(t)
         r2.pack(side=TOP, fill=BOTH)
-        l = Label(r2, text='Email: u3300035@gmail.com')
+        l = Label(r2, text=u'{0}: u3300035@gmail.com'.format(EMAIL))
         l.pack(side=LEFT)
         r3 = self.get_row(t)
         r3.pack(side=TOP, fill=BOTH)
-        l = Label(r3, text='Version: 1.4')
+        l = Label(r3, text=u'{0}: 1.5'.format(VERSION))
         l.pack(side=LEFT)
         r4 = self.get_row(t)
         r4.pack(side=TOP, fill=BOTH)
-        l = Label(r4, text='Release Date: 2016/8/23')
+        l = Label(r4, text=u'{0}: 2016/10/4'.format(RELEASE_DATE))
         l.pack(side=LEFT)
         r5 = self.get_row(t)
         r5.pack(side=TOP, fill=BOTH)
         fb = 'https://www.facebook.com/Littletool-342467976084787/'
-        l = Label(r5, text='Facebook: ')
+        l = Label(r5, text=u'{0}: '.format(FACEBOOK))
         l.pack(side=LEFT)
         l = Label(r5, text=fb, fg="blue", cursor="hand2")
         l.pack(side=LEFT)
@@ -322,7 +337,7 @@ class Format(Action, UtilsManager):
 
     def __init__(self, root):
         self.root = root
-        self.fields = ['Input Folder', 'Output Folder']
+        self.fields = [INPUT_FOLDER, OUTPUT_FOLDER]
         self.wideth = 250
         self.img = PhotoImage(file=path_join([".", "img", "info.gif"]))
         self.makeform(root, self.fields)
@@ -336,8 +351,8 @@ class Format(Action, UtilsManager):
     def wm_delete_window(self):
         if self.start_t and self.start_t.state == 'running':
             tkMessageBox.showerror(
-            "Close windows",
-            "Please cancel copy process first")
+            WARNING,
+            DEL_WINDOW_MSG)
         else:
             self.root.destroy()
 
@@ -346,7 +361,7 @@ class Format(Action, UtilsManager):
         row = self.get_row(root)
         lab = self.get_lab(row, width=11, text=field)
         ent = self.get_ent(row)
-        button = self.get_button(row, text='Brows', command=lambda: self.brows(ent, field))
+        button = self.get_button(row, text=BROWS, command=lambda: self.brows(ent, field))
         row.pack(side=TOP, expand=True,fill=X)
         lab.pack(side=LEFT)
         ent.pack(side=LEFT,fill=X, expand=TRUE)
@@ -379,15 +394,15 @@ class Format(Action, UtilsManager):
         b_frame = self.get_row(root)
         b_frame.pack(side=TOP)
         self.start_bt = self.get_button(
-            b_frame, text='Start', command=lambda: self.start())
+            b_frame, text=START, command=lambda: self.start())
         self.start_bt.config(state=DISABLED)
         self.start_bt.pack(side=LEFT)
         self.cancel_bt = self.get_button(
-            b_frame, text='Cancel', command=lambda: self.cancel())
+            b_frame, text=CANCEL, command=lambda: self.cancel())
         self.cancel_bt.config(state=DISABLED)
         self.cancel_bt.pack(fill=BOTH, side=LEFT)
         self.dup_bt = self.get_button(
-            b_frame, text='Find Duplicate', command=lambda: self.dup_info())
+            b_frame, text=DUPLICATE, command=lambda: self.dup_info())
         self.dup_bt.config(state=DISABLED)
         self.dup_bt.pack(fill=BOTH, side=LEFT) 
         
