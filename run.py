@@ -4,9 +4,11 @@ import math
 from tkFileDialog import askdirectory
 import tkMessageBox
 from pic import PicManager
+from vedio import VedioManager
 from utils import path_exists, copy, \
      create_folder, get_file_size, format_time, get_time, \
-     logger, path_join, UtilsManager
+     logger, path_join, UtilsManager, get_files
+from constant import TOTAL_FORMAT, PIC_FORMAT, VEDIO_FORMAT
 import threading
 import os
 import webbrowser
@@ -45,6 +47,7 @@ class StartThread(threading.Thread, UtilsManager):
     def __init__(self, listbox, time_bar, remain_can):
         threading.Thread.__init__(self)
         self.pic_mgr = PicManager()
+        self.vedio_mgr = VedioManager()
         self.state = 'idel'
         self.listbox = listbox
         self.time_bar = time_bar
@@ -62,8 +65,8 @@ class StartThread(threading.Thread, UtilsManager):
         self.remain_can.delete('all')
 
     def set_path(self, input_path, output_path):
-        self.pic_mgr.input_path = input_path
-        self.pic_mgr.output_path = output_path
+        self.pic_mgr.input_path = self.vedio_mgr.input_path = input_path
+        self.pic_mgr.output_path = self.vedio_mgr.output_path = output_path
 
     def listbox_insert(self, msg):
         self.listbox.insert(END, msg)
@@ -80,14 +83,14 @@ class StartThread(threading.Thread, UtilsManager):
     def precent(self):
         return self.percent
 
-    def show_time_bar(self):
-        bar_num = int((self.output_size*10)/self.input_size) % 11
-        while bar_num >= self.next_bar:
-            x1 = 15 * (self.next_bar -1)
-            x2 = x1 + 10
-            self.time_bar.create_rectangle(x1, 0, x2, 20, fill="blue", outline = 'blue')
-            self.time_bar.pack(side=LEFT,fill=X, expand=TRUE)
-            self.next_bar = self.next_bar + 1
+    #def show_time_bar(self):
+    #    bar_num = int((self.output_size*10)/self.input_size) % 11
+    #    while bar_num >= self.next_bar:
+    #        x1 = 15 * (self.next_bar -1)
+    #        x2 = x1 + 10
+    #        self.time_bar.create_rectangle(x1, 0, x2, 20, fill="blue", outline = 'blue')
+    #        self.time_bar.pack(side=LEFT,fill=X, expand=TRUE)
+    #        self.next_bar = self.next_bar + 1
 
     def show_time_line(self):
         raw = self.output_size * 1.0 /self.input_size
@@ -105,16 +108,19 @@ class StartThread(threading.Thread, UtilsManager):
     def run(self):
         self.percent_id = self.remain_can.create_text(WIDTH-20, 10, text="0%", state=NORMAL)
         self.listbox_insert(INIT_COPY_FILE)        
-
         self.listbox_insert(COUNT_FILE_SIZE)
-        for _file in self.pic_mgr.files:
-            self.input_size = self.input_size + get_file_size(_file)
-        for _file in self.pic_mgr.files:
-            #logger.info(u'{0}: {1}'.format(COPY_FILE,_file.encode('utf-8')))
-            fd = self.create_time_folder(_file)
-            f_size = get_file_size(_file)
+        self.input_size = self.pic_mgr.get_size() + self.vedio_mgr.get_size()
+        pic_run = self.pic_mgr.run()
+        vedio_run = self.vedio_mgr.run()
+        for gen in [pic_run, vedio_run]:
+            if not self.handel_run_gen(gen):
+                return
+        self.set_state('done')
+
+    def handel_run_gen(self, run_gen):
+        for f_size, text in run_gen:
+            self.listbox_insert(text + '\n')
             self.output_size = f_size + self.output_size
-            self.copy_file(_file, fd)
             try:
                 self.show_time_line()
             except Exception as err:
@@ -122,21 +128,9 @@ class StartThread(threading.Thread, UtilsManager):
             if self.state == 'cancel':
                 self.listbox_insert(COPY_CANCEL)
                 self.set_state('cancel')
-                return
-        self.set_state('done')
-
+                return False
+        return True
             
-    def copy_file(self, _file, fd):
-       text = copy(_file, fd)
-       self.listbox_insert(text + '\n')
-
-    def create_time_folder(self, _file):
-        fd = self.pic_mgr._get_time_folder(_file)
-        if not path_exists(fd):
-            text = create_folder(fd)
-            self.listbox.insert(END, text)
-            self.listbox.see(END)
-        return fd
 
     def state(self):
         return self.state
@@ -211,8 +205,11 @@ class Action(object):
             return
         self.start_t = StartThread(self.listbox, self.time_bar, self.remain_can)
         self.start_t.set_path(self.input_path, self.output_path)
-        self.start_t.pic_mgr.get_files()
-        if len(self.start_t.pic_mgr.files) == 0:
+        files = get_files(self.input_path, _format=TOTAL_FORMAT)
+        self.start_t.pic_mgr.get_files(files, PIC_FORMAT)
+        self.start_t.vedio_mgr.get_files(files, VEDIO_FORMAT)
+        if len(self.start_t.pic_mgr.files) == 0 and \
+           len(self.start_t.vedio_mgr.files) == 0:
             self.show_msg(WARNING, NO_PICTURE)
             return
         self.start_t.set_state('running')
