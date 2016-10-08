@@ -56,6 +56,9 @@ class UtilsManager(object):
         hscrollbar.config(command=listbox.xview)
         return listbox
 
+    def check_box(self, row, text, v):
+        return Checkbutton(row, text=text, variable=v)
+
 
 def run_cmd(cmd):
     subprocess.call(cmd, shell=True)

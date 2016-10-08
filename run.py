@@ -14,11 +14,11 @@ import os
 import webbrowser
 
 
-INPUT_FOLDER = u'照片資料夾'
+INPUT_FOLDER = u'檔案資料夾'
 OUTPUT_FOLDER = u'備份資料夾'
 BROWS = u'瀏覽'
 WIDTH = 315
-HEIGHT = 335
+HEIGHT = 380
 PERID_TIME = 500
 REMAIN_FORMAT = u'剩餘時間: {0}'
 COPY_CANCEL = u'取消備份'
@@ -39,6 +39,8 @@ FACEBOOK = u'粉絲團'
 VERSION = u'版本'
 RELEASE_DATE = u'版本日期'
 COPY_FILE = u'備份照片'
+RULE = u'規則:'
+TYPE = u'檔案類型:'
 
 PWD = os.getcwd()
 
@@ -205,7 +207,12 @@ class Action(object):
             return
         self.start_t = StartThread(self.listbox, self.time_bar, self.remain_can)
         self.start_t.set_path(self.input_path, self.output_path)
-        files = get_files(self.input_path, _format=TOTAL_FORMAT)
+
+        # Enable checked format
+        for fm in [self.v_mov, self.v_jpeg]:
+            if fm['value'].get():
+                self.total_format.append(fm['name'])
+        files = get_files(self.input_path, _format=self.total_format)
         self.start_t.pic_mgr.get_files(files, PIC_FORMAT)
         self.start_t.vedio_mgr.get_files(files, VEDIO_FORMAT)
         if len(self.start_t.pic_mgr.files) == 0 and \
@@ -230,8 +237,6 @@ class Action(object):
         tkMessageBox.showinfo(title, msg)
 
     def check_remain_time(self):
-        
-  
         if not self.start_t:
             return
         if not self.start_t.state == 'running':
@@ -313,11 +318,11 @@ class Action(object):
         l.pack(side=LEFT)
         r3 = self.get_row(t)
         r3.pack(side=TOP, fill=BOTH)
-        l = Label(r3, text=u'{0}: 1.5'.format(VERSION))
+        l = Label(r3, text=u'{0}: 1.6'.format(VERSION))
         l.pack(side=LEFT)
         r4 = self.get_row(t)
         r4.pack(side=TOP, fill=BOTH)
-        l = Label(r4, text=u'{0}: 2016/10/4'.format(RELEASE_DATE))
+        l = Label(r4, text=u'{0}: 2016/10/9'.format(RELEASE_DATE))
         l.pack(side=LEFT)
         r5 = self.get_row(t)
         r5.pack(side=TOP, fill=BOTH)
@@ -344,6 +349,7 @@ class Format(Action, UtilsManager):
         self.percent_id= None
         self.periodical_check()
         root.protocol('WM_DELETE_WINDOW', self.wm_delete_window)
+        self.total_format = []
 
     def wm_delete_window(self):
         if self.start_t and self.start_t.state == 'running':
@@ -364,6 +370,20 @@ class Format(Action, UtilsManager):
         ent.pack(side=LEFT,fill=X, expand=TRUE)
         button.pack(side=LEFT)
 
+    def rule_frame(self, row):
+        rule_f = self.get_row(row)
+        rule_f.pack(side=TOP, anchor='w', fill=BOTH)
+        lab = self.get_lab(rule_f, 0, TYPE)
+        lab.pack(side=LEFT)
+        self.int_var_mov = IntVar()
+        self.v_mov = {"name": "MOV", "value": self.int_var_mov}
+        chk_mov = self.check_box(rule_f, 'MOV', self.int_var_mov)
+        chk_mov.pack(side=LEFT)
+        self.int_var_jpeg = IntVar()
+        self.v_jpeg = {"name": "JPG", "value": self.int_var_jpeg}
+        chk_jpeg = self.check_box(rule_f, 'JPG', self.int_var_jpeg)
+        chk_jpeg.pack(side=LEFT)
+
         
     def makeform(self, root, fields):
         info_frame = self.get_row(root)
@@ -374,6 +394,10 @@ class Format(Action, UtilsManager):
         
         for field in fields:
             self.folder_format(root, field)
+
+        self.rule_frame(root)
+
+        
         self.listbox = self.get_scrollbar(self.root)
         time_frame = self.get_row(root, bg='red')
         time_frame.pack(side=TOP, expand=TRUE,fill=X)
