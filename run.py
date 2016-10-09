@@ -215,14 +215,14 @@ class Action(object):
  
     def start(self):
         if self.start_t and self.start_t.state == 'running' or \
-            self.check_format():
+            not self.check_format():
             return
         self.start_t = StartThread(self.listbox, self.time_bar, self.remain_can)
         self.start_t.set_path(self.input_path, self.output_path)
 
         files = get_files(self.input_path, _format=self.total_format)
-        self.start_t.pic_mgr.get_files(files, PIC_FORMAT)
-        self.start_t.vedio_mgr.get_files(files, VEDIO_FORMAT)
+        self.start_t.pic_mgr.get_files(files)
+        self.start_t.vedio_mgr.get_files(files)
         if len(self.start_t.pic_mgr.files) == 0 and \
            len(self.start_t.vedio_mgr.files) == 0:
             self.show_msg(WARNING, NO_PICTURE)

@@ -115,7 +115,10 @@ def copy(src, target, ignore_exist=False):
     #shutil.copystat(src, target)
     except:
         pass
-    return 'Exist: {0}'.format(target)
+    if platform.system() == "Windows":
+        return 'Exist: {0}'.format(target.encode('utf-8'))
+    else:
+        return 'Exist: {0}'.format(target)
 
 def is_diff(src, target):
     return filecmp.cmp(src, target)
@@ -127,25 +130,19 @@ def get_name(path):
     return os.path.basename(path)
 
 def path_join(paths):
-    print 'next'
+    if platform.system() == "Windows":
+        return os.path.join(*paths)
+
+    # For mac
     res = []
     for s in paths:
-        print s
-        if isinstance(s, str):
-            print "ordinary string"
-        elif isinstance(s, unicode):
+        if isinstance(s, unicode):
             try:
                 s = s.encode('utf-8')
             except:
                 pass
-            print "unicode string"
-        else:
-            print "not a string"
         res.append(s)
-    x = "/".join(res)  
-    print x
-    #x = os.path.join(*paths)
-    print 'xxx'
+    x = os.path.join(*res)
     return x
 
 def get_folder(path):
@@ -154,7 +151,8 @@ def get_folder(path):
 
 def create_folder(path):
     os.makedirs(path)
-    #return 'Create folder: {0}'.format(path.encode('utf-8'))
+    if platform.system() == "Windows":
+        return 'Create folder: {0}'.format(path.encode('utf-8'))
     return 'Create folder: {0}'.format(path)
     
 def get_modify_date(path):
