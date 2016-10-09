@@ -1,8 +1,21 @@
 # setup.py
-from distutils.core import setup
-import py2exe
 import glob
+import platform
 
-setup(windows=['run.py'],
-      data_files = [("img", glob.glob("img\\*"))])
-#setup(console=['run.py'])
+if platform.system() == 'Darwin':
+    from setuptools import setup
+    print 'In mac env'
+    APP = ['run.py']
+    DATA_FILES = [("img", glob.glob("img\\*"))]
+    OPTIONS = {'argv_emulation': True}
+
+    setup(
+        app=APP,
+        data_files=DATA_FILES,
+        options={'py2app': OPTIONS},
+        setup_requires=['py2app'],
+    )
+else:
+    from distutils.core import setup
+    setup(windows=['run.py'],
+          data_files = [("img", glob.glob("img\\*"))])

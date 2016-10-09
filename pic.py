@@ -11,10 +11,11 @@ class PicManager(BaseManager):
 	self.files = []
 	self.input_size = 0
 
-    def get_files(self, _files, _format):
-        for f in _format:
-            if f in PIC_FORMAT:
-                self.files = self.files + _files.get(f, [])
+    def get_files(self, _files):
+        for f in PIC_FORMAT:
+            res = _files.get(f, [])
+            if res:
+                self.files = self.files + res
 
     def set_time(self, _file):
         #self.img.open(_file)

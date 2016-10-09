@@ -15,10 +15,11 @@ class VedioManager(BaseManager):
         self.files = []
         self.input_size = 0
 
-    def get_files(self, _files, _format):
-        for f in _format:
-            if f in VEDIO_FORMAT:
-                self.files = self.files + _files.get(f, [])
+    def get_files(self, _files):
+        for f in VEDIO_FORMAT:
+            res = _files.get(f, [])
+            if res:
+                self.files = self.files + res
         
     def _handel_raw_meta(self, text):
         res = {}

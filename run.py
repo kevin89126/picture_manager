@@ -143,22 +143,24 @@ class StartThread(threading.Thread, UtilsManager):
 class Action(object):
 
     def dup_info(self):
-        pic_mgr = PicManager()
-        pic_mgr.input_path = self.input_path
-        title = INFO
-        pic_mgr.get_files()
-        if len(pic_mgr.files) == 0:
-            self.show_msg(WARNING, NO_PICTURE)
+        if not self.check_format():
             return
-        max_len = 0
+        pic_mgr = PicManager()
+        vedio_mgr = VedioManager()
+        title = INFO
+        files = get_files(self.input_path, _format=self.total_format)
+        pic_mgr.get_files(files)
+        p_dup = pic_mgr._find_dup()
+        vedio_mgr.get_files(files)
+        v_dup = vedio_mgr._find_dup()
         dup = {}
-        for key, value in pic_mgr.dics.items():
-            if len(value) <= 1:
-                continue
-            dup[key] = value
-        if not dup:
+        dup.update(p_dup)
+        dup.update(v_dup)
+ 
+        if len(dup) == 0:
             self.show_msg(WARNING, NO_DUPLICATE)
             return
+        max_len = 0
         t = Toplevel()
         t.wm_title(title)
         dup_farme = self.get_scrollbar(t)
@@ -167,11 +169,11 @@ class Action(object):
         for key, value in dup.items():
             res = []
             for v in value:
-                res.append(v.encode('utf-8'))
+                res.append(v)
             res = ', '.join(res)
             if max_len < len(res):
                 max_len = len(res) + 10
-            msg = '{2} {0}: {1}'.format(key.encode('utf-8'), res, i)
+            msg = '{2} {0}: {1}'.format(key, res, i)
             dup_farme.insert(END, msg)
             dup_farme.see(END)
             i = i + 1
@@ -179,7 +181,6 @@ class Action(object):
         msg = DONE
         self.show_msg(title, msg)
         t.lift()
-
         
     def brows(self, entry, field):
         fd = askdirectory(parent=self.root)
@@ -202,16 +203,23 @@ class Action(object):
         else:
             self.dup_bt.config(state=DISABLED)
 
+    def check_format(self):
+        self.total_format = []
+        for fm in [self.v_mov, self.v_jpeg]:
+            if fm['value'].get():
+                self.total_format.append(fm['name'])
+        if len(self.total_format) == 0:
+            self.show_msg(WARNING, "Please select type first")
+            return False
+        return True
+ 
     def start(self):
-        if self.start_t and self.start_t.state == 'running':
+        if self.start_t and self.start_t.state == 'running' or \
+            self.check_format():
             return
         self.start_t = StartThread(self.listbox, self.time_bar, self.remain_can)
         self.start_t.set_path(self.input_path, self.output_path)
 
-        # Enable checked format
-        for fm in [self.v_mov, self.v_jpeg]:
-            if fm['value'].get():
-                self.total_format.append(fm['name'])
         files = get_files(self.input_path, _format=self.total_format)
         self.start_t.pic_mgr.get_files(files, PIC_FORMAT)
         self.start_t.vedio_mgr.get_files(files, VEDIO_FORMAT)

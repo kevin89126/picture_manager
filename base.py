@@ -52,26 +52,24 @@ class BaseManager(object):
             names.append(name)
         return names
 
-    def to_dic(self, files):
+    def to_dic(self):
         def init_dic(names):
             dic = {}
             for name in names:
                 dic[name] = []
             return dic
-        names = self.get_names(files)
+        names = self.get_names(self.files)
         dic = init_dic(names)
-        for _file in files:
+        for _file in self.files:
             dic[get_name(_file)].append(_file)
         return dic
 
     def _find_dup(self):
-        res = []
-        for key, value in self.dics.items():
+        dics = self.to_dic()
+        res = {}
+        for key, value in dics.items():
             if len(value) > 1:
-                dic = {}
-                dic['name'] = key
-                dic['paths'] = value
-                res.append(dic)
+                res[key] = value
         return res
 
     def _handle_file(self, vals, res=[]):
