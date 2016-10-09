@@ -39,7 +39,7 @@ class BaseManager(object):
             print 'No time: ', _file
             return path_join([self.output_path, NOTIME_PATH, folder, ''])
         time_folder = time.split(' ')[0].strip().split(":")
-        return path_join([self.output_path] + time_folder + [folder, ''])
+        return path_join([self.output_path] + time_folder + [folder, u''])
             
     def _seperate_one(self, _file):
         fd = self._get_time_folder(_file)
