@@ -4,6 +4,7 @@ from utils import remove, get_files, is_diff, path_exists, \
     create_folder, move, path_join, copy, get_name, get_folder, \
     get_file_size, get_modify_date
 from constant import NOTIME_PATH
+import platform
 
 
 class BaseManager(object):
@@ -61,7 +62,10 @@ class BaseManager(object):
         names = self.get_names(self.files)
         dic = init_dic(names)
         for _file in self.files:
-            dic[get_name(_file)].append(_file)
+            if platform.system() == 'Windows':
+                dic[get_name(_file).encode('utf-8')].append(_file.encode('utf-8'))
+            else:
+                dic[get_name(_file)].append(_file)      
         return dic
 
     def _find_dup(self):
