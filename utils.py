@@ -9,6 +9,7 @@ from Tkinter import *
 import os
 from datetime import datetime
 import platform
+import unicodedata
 
 
 logger = logging.getLogger('PicTool')
@@ -67,6 +68,9 @@ def run_cmd(cmd):
 def remove(path):
     os.removedirs(path)
 
+def rename(src, des):
+    os.rename(src, des)
+
 def get_time():
     return time.time()
 
@@ -81,16 +85,28 @@ def _handle_files(files, _format=['MOV']):
             res.append(_f)
     return res
 
-def get_files(path, _format=[]):
-    res = {}
-    for f in _format:
-        res[f] = []
+def get_files(path, depth=1):
+    i = 0
+    res = []
     for root, dirs, files in os.walk(path):
-        for _f in files:
-	    _f_end = _f.split('.')[-1].strip()
-	    if _f_end.upper() in _format:
-	        res[_f_end.upper()].append(path_join([root, _f]))
+        i = i + 1
+        if depth == i:
+            return files
+        res.extend(files)
+        #print res
     return res
+
+def get_folders(path, depth=1):
+    i = 0
+    res = []
+    for root, dirs, files in os.walk(path):
+        i = i + 1
+        if depth == i:
+            return dirs
+        res.extend(dirs)
+        #print res
+    return res
+        
 
 def get_file_size(path):
     try:
@@ -107,6 +123,10 @@ def move(src, target):
     run_cmd(cmd)
 
 def copy(src, target, ignore_exist=False):
+    if not ignore_exist or not path_exists(target):
+        shutil.copy2(src, target)
+        return 'Copy {0} to {1}'.format(
+            src.encode('utf-8'), target.encode('utf-8'))
     try:
         if not ignore_exist or not path_exists(target):
             shutil.copy2(src, target)
@@ -145,16 +165,44 @@ def path_join(paths):
     x = os.path.join(*res)
     return x
 
+
 def get_folder(path):
     res = os.path.dirname(path)
     return get_name(res)
+
 
 def create_folder(path):
     os.makedirs(path)
     if platform.system() == "Windows":
         return 'Create folder: {0}'.format(path.encode('utf-8'))
     return 'Create folder: {0}'.format(path)
+
     
 def get_modify_date(path):
     time = os.path.getmtime(path)
     return datetime.fromtimestamp(int(time)).strftime('%Y:%m:%d')
+
+
+def is_chinese(uchar):
+    res = unicodedata.category(uchar)
+    #print res
+    if res == 'Lo':
+        #print uchar
+        return True
+    else:
+        return False
+
+    
+def collect_chinese(string):
+    res = u''
+    for i in string:
+        if is_chinese(i):
+            res = res + i
+    #print res
+    return res
+
+def has_chinese(string):
+    for i in string:
+        if is_chinese(i):
+            return True
+    return False
