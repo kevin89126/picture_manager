@@ -27,12 +27,22 @@ FILE_MAP = {
     u'C.*成品檢查紀錄表': 'C FQC'
     }
 
+class CancelError(Exception):
+    
+    def __init__(self, value):
+        self.value = value
+        
+    def __str__(self):
+        return repr(self.value)
+
+
 class HosongManager(object):
 
     def __init__(self, listbox=None):
         self.input_path = None
         self.output_path = None
         self.listbox = listbox
+        self.state = 'running'
         
     def rm_chinese(self):
         fds = get_folders(self.input_path)
@@ -47,7 +57,7 @@ class HosongManager(object):
         for src in FOLDER_MAP:
             _path = '\\'.join([path, fd])
             if re.search(src, fd):
-                msg = _path.strip(self.input_path)
+                #msg = _path.strip(self.input_path)
                 #print msg
                 #f.writelines([msg.encode('utf-8'), '\n'])
                 tp = '\\'.join([path, FOLDER_MAP[src]])
@@ -58,7 +68,10 @@ class HosongManager(object):
             self, path=None):
         path = path or self.input_path
         fds = get_folders(path, depth=1)
+        
         for fd in fds:
+            if self.state == 'cancel':
+                raise CancelError('取消')
             _path = self._check_chinese_folders(fd, path)
             self.change_folder_chinese(_path)
         return
@@ -194,6 +207,8 @@ class HosongManager(object):
     def create_hosong_folder(self):
         fds = get_folders(self.input_path)
         for fd in fds:
+            if self.state == 'cancel':
+                raise CancelError('取消')
             fd_path = '\\'.join([self.output_path, fd])
             if path_exists(fd_path):
                 continue
@@ -214,6 +229,9 @@ class HosongManager(object):
     def create_company_code_folder(self, res):
         for k, vs in res.iteritems():
             for v in vs:
+                if self.state == 'cancel':
+                    raise CancelError('取消')
+
                 if not re.search(u'.*A.*', v) and re.search(u'.*B.*', v):
                     continue
                 cp = k[len(self.input_path)+1:].split('\\')[0]
@@ -242,7 +260,6 @@ class HosongManager(object):
                 if re.search(u'.*A.*', v) or re.search(u'.*B.*', v):
                     cp = k[len(self.input_path)+1:].split('\\')[0]
                     if len(cp) not in [5,4]:
-                        print 'aaa',cp, k[len(self.input_path):]
                         continue
                     #print cp, k
                     cp_code = self.get_cp_code(v, cp.strip('0123456789'))
@@ -257,6 +274,8 @@ class HosongManager(object):
                     else:
                         pass
                         #print v, cp
+    def cancel(self):
+        self.state = 'cancel'
         
     def run(self):
         self.listbox(u'改變原始名稱至英文')
@@ -265,6 +284,6 @@ class HosongManager(object):
         self.create_hosong_folder()
         self.listbox(u'取得圖片代碼')
         res = self.get_drawing_pdf_name(u'001 Drawing')
-        self.listbox(u'建立圖片代碼')
+        self.listbox(u'建立圖片代碼資料夾')
         self.create_company_code_folder(res)
         self.listbox(u'移轉完成')        

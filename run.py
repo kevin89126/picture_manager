@@ -12,7 +12,7 @@ from constant import TOTAL_FORMAT, PIC_FORMAT, VEDIO_FORMAT
 import threading
 import os
 import webbrowser
-from hosong import HosongManager
+from hosong import HosongManager, CancelError
 
 
 INPUT_FOLDER = u'檔案資料夾'
@@ -109,9 +109,20 @@ class StartThread(threading.Thread, UtilsManager):
         self.next_bar = bar_line
     
     def run(self):
-        hosong_run = self.hosong_mgr.run()
-        self.set_state('done')
+        try:
+            hosong_run = self.hosong_mgr.run()
+            self.set_state('done')
+        except CancelError:
+            self.listbox_insert(u'取消')
+            pass
 
+    def stop(self):
+        try:
+            hosong_run = self.hosong_mgr.cancel()
+        except CancelError:
+            self.listbox_insert(u'取消')
+            self.set_state('cancel')
+            
     def handel_run_gen(self, run_gen):
         for f_size, text in run_gen:
             self.listbox_insert(text + '\n')
@@ -126,8 +137,7 @@ class StartThread(threading.Thread, UtilsManager):
                 return False
         return True
             
-
-    def state(self):
+    def get_state(self):
         return self.state
 
     def set_state(self, state):
@@ -255,6 +265,7 @@ class Action(object):
             #self.dup_bt.config(state=NORMAL)
             self.show_msg(INFO, DONE)
         elif self.start_t.state == 'cancel':
+            self.start_t.join()
             self.start_t = None
             self.cancel_bt.config(state=DISABLED)
             self.start_bt.config(state=NORMAL)
@@ -287,6 +298,7 @@ class Action(object):
     def cancel(self):
         if self.start_t and self.start_t.state == 'cancel':
             return
+        self.start_t.stop()
         self.start_t.set_state('cancel')
 
     def info(self):
