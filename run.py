@@ -12,16 +12,17 @@ from constant import TOTAL_FORMAT, PIC_FORMAT, VEDIO_FORMAT
 import threading
 import os
 import webbrowser
+from hosong import HosongManager
 
 
 INPUT_FOLDER = u'檔案資料夾'
 OUTPUT_FOLDER = u'備份資料夾'
 BROWS = u'瀏覽'
-WIDTH = 315
-HEIGHT = 380
+WIDTH = 280
+HEIGHT = 300
 PERID_TIME = 500
 REMAIN_FORMAT = u'剩餘時間: {0}'
-COPY_CANCEL = u'取消備份'
+COPY_CANCEL = u'取消移轉'
 CANCEL = u'取消'
 DONE = u'完成'
 INIT_COPY_FILE = u'備份檔案準備中'
@@ -46,10 +47,9 @@ PWD = os.getcwd()
 
 class StartThread(threading.Thread, UtilsManager):
     
-    def __init__(self, listbox, time_bar, remain_can):
+    def __init__(self, listbox=None, time_bar=None, remain_can=None):
         threading.Thread.__init__(self)
-        self.pic_mgr = PicManager()
-        self.vedio_mgr = VedioManager()
+        #self.vedio_mgr = VedioManager()
         self.state = 'idel'
         self.listbox = listbox
         self.time_bar = time_bar
@@ -60,15 +60,16 @@ class StartThread(threading.Thread, UtilsManager):
         self.next_bar = 1
         self.width = WIDTH
         self.replace = False
-        self.str_time = get_time()
+        #self.str_time = get_time()
+        self.hosong_mgr = HosongManager(self.listbox_insert)
 
     def reset_time_bar(self):
         self.time_bar.delete('all')
         self.remain_can.delete('all')
 
     def set_path(self, input_path, output_path):
-        self.pic_mgr.input_path = self.vedio_mgr.input_path = input_path
-        self.pic_mgr.output_path = self.vedio_mgr.output_path = output_path
+        self.hosong_mgr.input_path = input_path
+        self.hosong_mgr.output_path = output_path
 
     def listbox_insert(self, msg):
         self.listbox.insert(END, msg)
@@ -108,15 +109,7 @@ class StartThread(threading.Thread, UtilsManager):
         self.next_bar = bar_line
     
     def run(self):
-        self.percent_id = self.remain_can.create_text(WIDTH-20, 10, text="0%", state=NORMAL)
-        self.listbox_insert(INIT_COPY_FILE)        
-        self.listbox_insert(COUNT_FILE_SIZE)
-        self.input_size = self.pic_mgr.get_size() + self.vedio_mgr.get_size()
-        pic_run = self.pic_mgr.run()
-        vedio_run = self.vedio_mgr.run()
-        for gen in [pic_run, vedio_run]:
-            if not self.handel_run_gen(gen):
-                return
+        hosong_run = self.hosong_mgr.run()
         self.set_state('done')
 
     def handel_run_gen(self, run_gen):
@@ -198,10 +191,10 @@ class Action(object):
         else:
             self.start_bt.config(state=DISABLED)
 
-        if self.input_path:
-            self.dup_bt.config(state=NORMAL)
-        else:
-            self.dup_bt.config(state=DISABLED)
+        #if self.input_path:
+        #    self.dup_bt.config(state=NORMAL)
+        #else:
+        #    self.dup_bt.config(state=DISABLED)
 
     def check_format(self):
         self.total_format = []
@@ -212,27 +205,13 @@ class Action(object):
             self.show_msg(WARNING, "Please select type first")
             return False
         return True
- 
-    def start(self):
-        if self.start_t and self.start_t.state == 'running' or \
-            not self.check_format():
-            return
-        self.start_t = StartThread(self.listbox, self.time_bar, self.remain_can)
-        self.start_t.set_path(self.input_path, self.output_path)
 
-        files = get_files(self.input_path, _format=self.total_format)
-        self.start_t.pic_mgr.get_files(files)
-        self.start_t.vedio_mgr.get_files(files)
-        if len(self.start_t.pic_mgr.files) == 0 and \
-           len(self.start_t.vedio_mgr.files) == 0:
-            self.show_msg(WARNING, NO_PICTURE)
+    def start(self):
+        if self.start_t and self.start_t.state == 'running':
             return
+        self.start_t = StartThread(self.listbox)
+        self.start_t.set_path(self.input_path, self.output_path)
         self.start_t.set_state('running')
-        self.start_t.reset_time_bar()
-        #remain_time = format_time(0)
-        #text = REMAIN_FORMAT.format(remain_time)
-        #self.remain_time_id = self.remain_can.create_text(
-        #    80, 10, text=text, state=NORMAL)
         self.start_t.start()
         self.cancel_bt.config(state=NORMAL)
 
@@ -266,20 +245,20 @@ class Action(object):
             return
         if self.start_t.state == 'running':
             self.start_bt.config(state=DISABLED)
-            self.dup_bt.config(state=DISABLED)
+            #self.dup_bt.config(state=DISABLED)
             #self.check_remain_time()
 
         if self.start_t.state == 'done':
             self.start_t = None
             self.cancel_bt.config(state=DISABLED)
             self.start_bt.config(state=NORMAL)
-            self.dup_bt.config(state=NORMAL)
+            #self.dup_bt.config(state=NORMAL)
             self.show_msg(INFO, DONE)
         elif self.start_t.state == 'cancel':
             self.start_t = None
             self.cancel_bt.config(state=DISABLED)
             self.start_bt.config(state=NORMAL)
-            self.dup_bt.config(state=NORMAL)
+            #self.dup_bt.config(state=NORMAL)
             self.show_msg(INFO, CANCEL)
 
     def check_start_bt(self):
@@ -326,20 +305,20 @@ class Action(object):
         l.pack(side=LEFT)
         r3 = self.get_row(t)
         r3.pack(side=TOP, fill=BOTH)
-        l = Label(r3, text=u'{0}: 1.6'.format(VERSION))
+        l = Label(r3, text=u'{0}: 1.0'.format(VERSION))
         l.pack(side=LEFT)
         r4 = self.get_row(t)
         r4.pack(side=TOP, fill=BOTH)
-        l = Label(r4, text=u'{0}: 2016/10/9'.format(RELEASE_DATE))
+        l = Label(r4, text=u'{0}: 2017/1/22'.format(RELEASE_DATE))
         l.pack(side=LEFT)
         r5 = self.get_row(t)
         r5.pack(side=TOP, fill=BOTH)
-        fb = 'https://www.facebook.com/Littletool-342467976084787/'
-        l = Label(r5, text=u'{0}: '.format(FACEBOOK))
-        l.pack(side=LEFT)
-        l = Label(r5, text=fb, fg="blue", cursor="hand2")
-        l.pack(side=LEFT)
-        l.bind("<Button-1>", callback)
+        #fb = 'https://www.facebook.com/Littletool-342467976084787/'
+        #l = Label(r5, text=u'{0}: '.format(FACEBOOK))
+        #l.pack(side=LEFT)
+        #l = Label(r5, text=fb, fg="blue", cursor="hand2")
+        #l.pack(side=LEFT)
+        #l.bind("<Button-1>", callback)
 
 
         
@@ -403,22 +382,23 @@ class Format(Action, UtilsManager):
         for field in fields:
             self.folder_format(root, field)
 
-        self.rule_frame(root)
+        #self.rule_frame(root)
 
         
         self.listbox = self.get_scrollbar(self.root)
-        time_frame = self.get_row(root, bg='red')
-        time_frame.pack(side=TOP, expand=TRUE,fill=X)
-        self.time_bar = Canvas(time_frame, width=WIDTH, height=20)
 
-        for child in time_frame.winfo_children():
-            child.configure(state='disable')
-        self.time_bar.pack(side=LEFT,fill=X, expand=TRUE)
+        #time_frame = self.get_row(root, bg='red')
+        #time_frame.pack(side=TOP, expand=TRUE,fill=X)
+        #self.time_bar = Canvas(time_frame, width=WIDTH, height=20)
 
-        remain_frame = self.get_row(root, bg='red')
-        remain_frame.pack(side=TOP, expand=TRUE,fill=X)
-        self.remain_can = Canvas(remain_frame, width=WIDTH, height=20)
-        self.remain_can.pack(side=LEFT)
+        #for child in time_frame.winfo_children():
+        #    child.configure(state='disable')
+        #self.time_bar.pack(side=LEFT,fill=X, expand=TRUE)
+
+        #remain_frame = self.get_row(root, bg='red')
+        #remain_frame.pack(side=TOP, expand=TRUE,fill=X)
+        #self.remain_can = Canvas(remain_frame, width=WIDTH, height=20)
+        #self.remain_can.pack(side=LEFT)
 
         b_frame = self.get_row(root)
         b_frame.pack(side=TOP)
@@ -430,10 +410,10 @@ class Format(Action, UtilsManager):
             b_frame, text=CANCEL, command=lambda: self.cancel())
         self.cancel_bt.config(state=DISABLED)
         self.cancel_bt.pack(fill=BOTH, side=LEFT)
-        self.dup_bt = self.get_button(
-            b_frame, text=DUPLICATE, command=lambda: self.dup_info())
-        self.dup_bt.config(state=DISABLED)
-        self.dup_bt.pack(fill=BOTH, side=LEFT) 
+        #self.dup_bt = self.get_button(
+        #    b_frame, text=DUPLICATE, command=lambda: self.dup_info())
+        #self.dup_bt.config(state=DISABLED)
+        #self.dup_bt.pack(fill=BOTH, side=LEFT) 
         
 
 root = Tk()

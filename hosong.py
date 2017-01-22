@@ -29,18 +29,17 @@ FILE_MAP = {
 
 class HosongManager(object):
 
-    def __init__(self):
-        self.path = u"C:\\Users\\Kevin\\Desktop\\new_tree"
-        #self.path = u"D:\\test"
-        self.target = "D:\\ESOP"
-        self.chinese = set([])
-
+    def __init__(self, listbox=None):
+        self.input_path = None
+        self.output_path = None
+        self.listbox = listbox
+        
     def rm_chinese(self):
-        fds = get_folders(self.path)
+        fds = get_folders(self.input_path)
         for fd in fds:
-            path = '\\'.join([self.path, fd])
+            path = '\\'.join([self.input_path, fd])
             print path
-            target_path = '\\'.join([self.path, fd.split()[0]])
+            target_path = '\\'.join([self.input_path, fd.split()[0]])
             print target_path
             rename(path, target_path)
 
@@ -48,20 +47,20 @@ class HosongManager(object):
         for src in FOLDER_MAP:
             _path = '\\'.join([path, fd])
             if re.search(src, fd):
-                msg = _path.strip(self.path)
-                print msg
-                f.writelines([msg.encode('utf-8'), '\n'])
+                msg = _path.strip(self.input_path)
+                #print msg
+                #f.writelines([msg.encode('utf-8'), '\n'])
                 tp = '\\'.join([path, FOLDER_MAP[src]])
                 rename(_path, tp)
         return _path
 
     def change_folder_chinese(
-            self, f, path=None):
-        path = path or self.path
+            self, path=None):
+        path = path or self.input_path
         fds = get_folders(path, depth=1)
         for fd in fds:
             _path = self._check_chinese_folders(fd, path)
-            self.change_folder_chinese(f, _path)
+            self.change_folder_chinese(_path)
         return
 
     def _check_new_folders(self, fd, path):
@@ -73,8 +72,8 @@ class HosongManager(object):
                     create_folder(tp)
         return _path
                     
-    def create_new_folder(self, f, path=None):
-        path = path or self.path
+    def create_new_folder(self, path=None):
+        path = path or self.input_path
         fds = get_folders(path, depth=1)
         for fd in fds:
             _path = self._check_new_folders(fd, path)
@@ -82,8 +81,8 @@ class HosongManager(object):
         return    
 
     def get_drawing_pdf_name(
-            self, f, src, path=None):
-        path = path or self.path
+            self, src, path=None):
+        path = path or self.input_path
         res = {}
         fds = get_folders(path, depth=1)
         for fd in fds:
@@ -97,7 +96,7 @@ class HosongManager(object):
                     if not re.search('^._', _f) and _f.endswith('.pdf'):
                        #and re.search('.*]A0[0-9]', _f):
                         res[_path].append(_f.strip('.pdf'))
-            _res = self.get_drawing_pdf_name(f, src, _path)
+            _res = self.get_drawing_pdf_name(src, _path)
             res.update(_res)
         return res
 
@@ -125,7 +124,7 @@ class HosongManager(object):
 
 
     def find_chinese_file(self, f, path=None):
-        path = path or self.path
+        path = path or self.input_path
         fds = get_folders(path, depth=1)
         for fd in fds:
             #print fd
@@ -146,7 +145,7 @@ class HosongManager(object):
         return
 
     def find_chinese_string(self, f, path=None):
-        path = path or self.path
+        path = path or self.input_path
         fds = get_folders(path, depth=1)
         for fd in fds:
             #print fd
@@ -184,7 +183,7 @@ class HosongManager(object):
                         find = True
                         res[path].append(_f.strip('.pdf'))
             if not find:
-                g.writelines([k.strip(self.path).encode('utf-8'), '\n'])
+                g.writelines([k.strip(self.input_path).encode('utf-8'), '\n'])
                 pass
                 #print 'Not Found: {0}'.format(k.encode('utf-8'))
             else:
@@ -193,9 +192,11 @@ class HosongManager(object):
         return res
 
     def create_hosong_folder(self):
-        fds = get_folders(self.path)
+        fds = get_folders(self.input_path)
         for fd in fds:
-            fd_path = '\\'.join([self.target, fd])
+            fd_path = '\\'.join([self.output_path, fd])
+            if path_exists(fd_path):
+                continue
             create_folder(fd_path)
 
     def get_cp_code(self, cp, pre_fix):
@@ -213,48 +214,41 @@ class HosongManager(object):
     def create_company_code_folder(self, res):
         for k, vs in res.iteritems():
             for v in vs:
-                if re.search(u'.*A.*', v) or re.search(u'.*B.*', v):
-                    cp = k[len(self.path)+1:].split('\\')[0]
-                    org = k.split('\\')[:-1]
-                    org_fds_path = '\\'.join(org)
-                    #print org_fds_path
-                    if len(cp) not in [5,4]:
-                        print 'aaa',cp, k[len(self.path):]
-                        continue
-                    #print cp, k
-                    cp_code = self.get_cp_code(v, cp.strip('0123456789'))
-                    #print v, cp_code
-                    if cp_code:
-                        path = '\\'.join([self.target, unicode(cp), unicode(
-                            'A'+cp_code)])
-                        #path = '\\'.join([self.target, unicode(cp), u''])
-                        
-                        #print path, type(path.encode('utf-8'))
-                        #if not path_exists(path):
-                        #    create_folder(path.encode('utf-8'))
-                        n = 0
-                        while path_exists(path):
-                            n = n + 1
-                            path = u'{0}_{1}'.format(path, n) 
-                        shutil.copytree(org_fds_path, path)
-                        break
-                    else:
-                        pass
-                        #print v, cp
+                if not re.search(u'.*A.*', v) and re.search(u'.*B.*', v):
+                    continue
+                cp = k[len(self.input_path)+1:].split('\\')[0]
+                org = k.split('\\')[:-1]
+                org_fds_path = '\\'.join(org)
+                #print org_fds_path
+                if len(cp) not in [5,4]:
+                    continue
+                #print cp, k
+                cp_code = self.get_cp_code(v, cp.strip('0123456789'))
+                #print v, cp_code
+                if not cp_code:
+                    continue
+                path = '\\'.join([self.output_path, unicode(cp), unicode(
+                    'A'+cp_code)])
+                if path_exists(path):
+                    self.listbox(u'圖片代碼已存在:')
+                    self.listbox(u'{0}'.format(path))
+                    continue
+                shutil.copytree(org_fds_path, path)
+                break
 
     def copy_company_code_file(self, res):
         for k, vs in res.iteritems():
             for v in vs:
                 if re.search(u'.*A.*', v) or re.search(u'.*B.*', v):
-                    cp = k[len(self.path)+1:].split('\\')[0]
+                    cp = k[len(self.input_path)+1:].split('\\')[0]
                     if len(cp) not in [5,4]:
-                        print 'aaa',cp, k[len(self.path):]
+                        print 'aaa',cp, k[len(self.input_path):]
                         continue
                     #print cp, k
                     cp_code = self.get_cp_code(v, cp.strip('0123456789'))
                     #print v, cp_code
                     if cp_code:
-                        path = '\\'.join([self.target, unicode(cp), unicode(
+                        path = '\\'.join([self.output_path, unicode(cp), unicode(
                             'A'+cp_code)])
                         #print path, type(path.encode('utf-8'))
                         if not path_exists(path):
@@ -265,39 +259,12 @@ class HosongManager(object):
                         #print v, cp
         
     def run(self):
-        res = get_files(self.path, _format=['PDF'])
-        for _f in res['PDF']:
-            if u'舊圖檔' in _f or '._' in _f:
-                continue
-            if u'001  成品圖' in _f:
-                #print _f
-                b_num = _f.rindex('A')
-                index = _f.strip('.pdf')[b_num:b_num+8]
-                if not index.strip('A').isdigit():
-                    continue
-                print index
-                #break
-            
-if __name__ == '__main__':
-    mgr = HosongManager()
-    #f = open('D:\\No_company_code.txt', 'w')
-    f_res = open('D:\\res.txt', 'r+')
-    #r_res = open('D:\\res1.txt', 'w')
-    res = json.load(f_res)
-    #mgr.change_folder_chinese(f)
-    #mgr.create_new_folder(f)
-    #res = mgr.get_drawing_pdf_name(f, u'001 Drawing')
-    #json.dump(res, f)
-    #mgr.find_chinese_file(f)
-    #mgr.find_chinese_string(f)
-    #f.writelines(list(mgr.chinese))
-    #print mgr.chinese
-    #res = mgr.check_no_drawing(res, f)
-    #json.dump(res, r_res)
-    #f.close()
-    #r_res.close()
-    #mgr.create_hosong_folder()
-    mgr.create_company_code_folder(res)
-    f_res.close()
-    #mgr.run()
-        
+        self.listbox(u'改變原始名稱至英文')
+        self.change_folder_chinese()
+        self.listbox(u'建立公司資料夾')
+        self.create_hosong_folder()
+        self.listbox(u'取得圖片代碼')
+        res = self.get_drawing_pdf_name(u'001 Drawing')
+        self.listbox(u'建立圖片代碼')
+        self.create_company_code_folder(res)
+        self.listbox(u'移轉完成')        
