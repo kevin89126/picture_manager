@@ -43,6 +43,7 @@ class HosongManager(object):
         self.output_path = None
         self.listbox = listbox
         self.state = 'running'
+
         
     def rm_chinese(self):
         fds = get_folders(self.input_path)
@@ -278,7 +279,9 @@ class HosongManager(object):
         self.state = 'cancel'
         
     def run(self):
-        self.listbox(u'改變原始名稱至英文')
+        self.listbox(u'改變公司名稱至英文')
+        self.rm_chinese()
+        self.listbox(u'改變檔案至英文')
         self.change_folder_chinese()
         self.listbox(u'建立公司資料夾')
         self.create_hosong_folder()
