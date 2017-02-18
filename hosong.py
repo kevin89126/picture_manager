@@ -233,7 +233,10 @@ class HosongManager(object):
                 if self.state == 'cancel':
                     raise CancelError('取消')
 
-                if not re.search(u'.*A.*', v) and re.search(u'.*B.*', v):
+                if not re.search(u'.*A.*', v) and re.search(u'.*B.*', v) \
+                   and re.search(u'.*C.*', v) and re.search(u'.*N.*', v) \
+                   and re.search(u'.*N.*', v) and re.search(u'.*VA.*', v) \
+                   and re.search(u'.*VB.*', v):
                     continue
                 cp = k[len(self.input_path)+1:].split('\\')[0]
                 org = k.split('\\')[:-1]
@@ -242,12 +245,13 @@ class HosongManager(object):
                 if len(cp) not in [5,4]:
                     continue
                 #print cp, k
-                cp_code = self.get_cp_code(v, cp.strip('0123456789'))
+                prefix = cp.strip('0123456789')
+                cp_code = self.get_cp_code(v, prefix)
                 #print v, cp_code
                 if not cp_code:
                     continue
                 path = '\\'.join([self.output_path, unicode(cp), unicode(
-                    'A'+cp_code)])
+                    prefix+cp_code)])
                 if path_exists(path):
                     self.listbox(u'圖片代碼已存在:')
                     self.listbox(u'{0}'.format(path))
