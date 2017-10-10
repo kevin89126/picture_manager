@@ -10,9 +10,10 @@ class PicManager(BaseManager):
 	self.img = img
 	self.files = []
 	self.input_size = 0
+	self._format = PIC_FORMAT
 
     def get_files(self, _files):
-        for f in PIC_FORMAT:
+        for f in self._format:
             res = _files.get(f, [])
             if res:
                 self.files = self.files + res
@@ -20,6 +21,7 @@ class PicManager(BaseManager):
     def set_time(self, _file):
         #self.img.open(_file)
         pass
+
 
     def _get_time(self, _file):
         time = ''

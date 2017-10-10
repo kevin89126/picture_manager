@@ -1,5 +1,3 @@
+from utils import *
 
-class test():
-    def z(self):
-        for i in range(2):
-            yield i, 'g'
+print get_files('D:/aaa\\2016\\11\\20\\', _format=['JPG'])

@@ -31,8 +31,7 @@ class BaseManager(object):
     def get_file_num(self):
         return len(self.files)
 
-    def _get_time_folder(self, _file):
-        folder = get_folder(_file)
+    def _base_get_time_folder(self, _file):
         time = self._get_time(_file)
         if not time:
             time = get_modify_date(_file)
@@ -40,7 +39,12 @@ class BaseManager(object):
             print 'No time: ', _file
             return path_join([self.output_path, NOTIME_PATH, folder, ''])
         time_folder = time.split(' ')[0].strip().split(":")
-        return path_join([self.output_path] + time_folder + [folder, u''])
+        return path_join([self.output_path] + time_folder)
+
+    def _get_time_folder(self, _file):
+        folder = get_folder(_file)
+        time_folder = self._base_get_time_folder(_file)
+        return path_join([time_folder] + [folder, u''])
             
     def _seperate_one(self, _file):
         fd = self._get_time_folder(_file)
@@ -100,10 +104,22 @@ class BaseManager(object):
             print '{0}: {1}'.format(dic['name'], dic['paths'])
             self._handle_file(dic['paths'])
 
+    def check_dup(self, f, exist_files):
+        for _format, e_files in exist_files.iteritems():
+            for e_f in e_files:
+                if f in e_f:
+                    return True
+        return False
+        
+
     def run(self):
         for f in self.files:
-            fd = self._create_time_folder(f)
+            base_time_folder = self._base_get_time_folder(f)
+            exist_files = get_files(base_time_folder, _format=self._format)
             f_name = get_name(f)
-            tar = path_join([fd, f_name])
-            text = copy(f, tar, ignore_exist=True)
+            text = 'Ignore exist file: {0}'.format(f)
+            if not self.check_dup(f_name, exist_files):
+                fd = self._create_time_folder(f)
+                tar = path_join([fd, f_name])
+                text = copy(f, tar, ignore_exist=True)
             yield get_file_size(f), text

@@ -14,9 +14,10 @@ class VedioManager(BaseManager):
     def __init__(self):
         self.files = []
         self.input_size = 0
+        self._format = VEDIO_FORMAT
 
     def get_files(self, _files):
-        for f in VEDIO_FORMAT:
+        for f in self._format:
             res = _files.get(f, [])
             if res:
                 self.files = self.files + res
