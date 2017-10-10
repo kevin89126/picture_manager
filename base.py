@@ -66,6 +66,7 @@ class BaseManager(object):
         names = self.get_names(self.files)
         dic = init_dic(names)
         for _file in self.files:
+            print _file
             if platform.system() == 'Windows':
                 dic[get_name(_file).encode('utf-8')].append(_file.encode('utf-8'))
             else:
